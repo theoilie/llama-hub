@@ -68,6 +68,8 @@ class LocalGithubRepositoryReader(BaseReader):
                           f"ignoring file {file_path} due to file extension",
                       )
                       continue
+              
+              print_if_verbose(self._verbose, f"trying file {file_path}")
 
               with open(file_path, "rb") as f:
                   file_content = f.read()
