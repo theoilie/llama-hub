@@ -37,6 +37,7 @@ class LocalGithubRepositoryReader(BaseReader):
         use_parser: bool = True,
         verbose: bool = False,
         ignore_file_extensions: Optional[List[str]] = None,
+        ignore_file_names: Optional[List[str]] = None,
         ignore_directories: Optional[List[str]] = None,
     ):
         super().__init__()
@@ -44,6 +45,7 @@ class LocalGithubRepositoryReader(BaseReader):
         self._use_parser = use_parser
         self._verbose = verbose
         self._ignore_file_extensions = ignore_file_extensions
+        self._ignore_file_names = ignore_file_names
         self._ignore_directories = ignore_directories
 
     def load_data(self) -> List[Document]:
@@ -51,7 +53,9 @@ class LocalGithubRepositoryReader(BaseReader):
 
       print_if_verbose(self._verbose, f"ignore_directories {self._ignore_directories}")
       print_if_verbose(self._verbose, f"ignore_file_extensions {self._ignore_file_extensions}")
+      print_if_verbose(self._verbose, f"ignore_file_names {self._ignore_file_names}")
       for root, dirs, files in os.walk(self._local_repo_path):
+          # Ignore specified directories
           print_if_verbose(self._verbose, f"dirs before filtering: {dirs}")
           if self._ignore_directories is not None:
             dirs[:] = [d for d in dirs if d not in self._ignore_directories]
@@ -60,7 +64,9 @@ class LocalGithubRepositoryReader(BaseReader):
           for file in files:
               file_path = os.path.join(root, file)
               rel_path = os.path.relpath(file_path, self._local_repo_path)
+              file_name = os.path.basename(file_path)
 
+              # Ignore specified file extensions
               if self._ignore_file_extensions is not None:
                   if get_file_extension(file_path) in self._ignore_file_extensions:
                       print_if_verbose(
@@ -68,10 +74,20 @@ class LocalGithubRepositoryReader(BaseReader):
                           f"ignoring file {file_path} due to file extension",
                       )
                       continue
+              
+              # Ignore specified file names
+              if self._ignore_file_names is not None:
+                  if file_name in self._ignore_file_names:
+                      print_if_verbose(
+                          self._verbose,
+                          f"ignoring file {file_path} due to file name",
+                      )
+                      continue
 
               with open(file_path, "rb") as f:
                   file_content = f.read()
 
+              # Try to parse with extension-specific parser first
               if self._use_parser:
                   document = self._parse_supported_file(
                       file_path=rel_path,
@@ -88,6 +104,7 @@ class LocalGithubRepositoryReader(BaseReader):
                     + " - falling back to decoding as utf-8 raw text",
                 )
 
+              # Fall back to parsing as raw text (utf-8)
               try:
                   decoded_text = file_content.decode("utf-8")
               except UnicodeDecodeError:
@@ -106,7 +123,7 @@ class LocalGithubRepositoryReader(BaseReader):
                   doc_id=None,
                   extra_info={
                       "file_path": rel_path,
-                      "file_name": os.path.basename(file_path),
+                      "file_name": file_name,
                   },
               )
               documents.append(document)
