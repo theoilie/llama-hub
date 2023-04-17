@@ -15,12 +15,20 @@ from typing import List, Optional
 from llama_index.readers.base import BaseReader
 from llama_index.readers.file.base import DEFAULT_FILE_EXTRACTOR
 from llama_index.readers.file.base_parser import ImageParserOutput
-from llama_index.readers.github_readers.utils import get_file_extension, print_if_verbose
 from llama_index.readers.schema.base import Document
 
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("LocalGithubRepositoryReader")
 
+def print_if_verbose(verbose: bool, message: str) -> None:
+    """Log message if verbose is True."""
+    if verbose:
+        print(message)
+
+
+def get_file_extension(filename: str) -> str:
+    """Get file extension."""
+    return f".{os.path.splitext(filename)[1][1:].lower()}"
 
 class LocalGithubRepositoryReader(BaseReader):
     def __init__(

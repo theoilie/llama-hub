@@ -308,6 +308,20 @@
       "__init__.py"
     ]
   },
+  "LocalGithubRepositoryReader": {
+    "id": "local_github_repo",
+    "author": "theoilie",
+    "keywords": [
+      "git",
+      "repository",
+      "git",
+      "code",
+      "source code"
+    ],
+    "extra_files": [
+      "__init__.py"
+    ]
+  },
   "RDFReader": {
     "id": "file/rdf",
     "author": "mommi84",
