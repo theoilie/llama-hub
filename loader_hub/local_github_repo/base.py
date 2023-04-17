@@ -50,10 +50,10 @@ class LocalGithubRepositoryReader(BaseReader):
       documents = []
 
       print_if_verbose(self._verbose, f"ignore_directories {self._ignore_directories}")
+      print_if_verbose(self._verbose, f"ignore_file_extensions {self._ignore_file_extensions}")
       for root, _, files in os.walk(self._local_repo_path):
           rel_root = os.path.relpath(root, self._local_repo_path)
           path_parts = pathlib.Path(rel_root).parts
-          print_if_verbose(self._verbose, f"path parts: {path_parts}")
 
           if self._ignore_directories is not None and any(d in path_parts for d in self._ignore_directories):
               print_if_verbose(self._verbose, f"ignoring directory {root}")
