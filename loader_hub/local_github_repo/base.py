@@ -68,8 +68,6 @@ class LocalGithubRepositoryReader(BaseReader):
                           f"ignoring file {file_path} due to file extension",
                       )
                       continue
-              
-              print_if_verbose(self._verbose, f"trying file {file_path}")
 
               with open(file_path, "rb") as f:
                   file_content = f.read()
@@ -83,8 +81,12 @@ class LocalGithubRepositoryReader(BaseReader):
                   )
                   if document is not None:
                       documents.append(document)
-                  else:
                       continue
+                  print_if_verbose(
+                    self._verbose,
+                    f"could not parse {file_path} as a supported file type"
+                    + " - falling back to decoding as utf-8 raw text",
+                )
 
               try:
                   decoded_text = file_content.decode("utf-8")
