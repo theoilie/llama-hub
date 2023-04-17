@@ -47,71 +47,67 @@ class LocalGithubRepositoryReader(BaseReader):
         self._ignore_directories = ignore_directories
 
     def load_data(self) -> List[Document]:
-        documents = []
+      documents = []
 
-        for root, _, files in os.walk(self._local_repo_path):
-            for file in files:
-                file_path = os.path.join(root, file)
-                rel_path = os.path.relpath(file_path, self._local_repo_path)
+      for root, _, files in os.walk(self._local_repo_path):
+          rel_root = os.path.relpath(root, self._local_repo_path)
+          path_parts = pathlib.Path(rel_root).parts
 
-                if self._ignore_file_extensions is not None:
-                    if get_file_extension(file_path) in self._ignore_file_extensions:
-                        print_if_verbose(
-                            self._verbose,
-                            f"ignoring file {file_path} due to file extension",
-                        )
-                        continue
+          if self._ignore_directories is not None and any(d in path_parts for d in self._ignore_directories):
+              print_if_verbose(self._verbose, f"ignoring directory {root}")
+              continue
 
-                if self._ignore_directories is not None:
-                    if any(
-                        d in pathlib.Path(rel_path).parts
-                        for d in self._ignore_directories
-                    ):
-                        print_if_verbose(
-                            self._verbose,
-                            f"ignoring file {file_path} due to directory",
-                        )
-                        continue
+          for file in files:
+              file_path = os.path.join(root, file)
+              rel_path = os.path.relpath(file_path, self._local_repo_path)
 
-                with open(file_path, "rb") as f:
-                    file_content = f.read()
+              if self._ignore_file_extensions is not None:
+                  if get_file_extension(file_path) in self._ignore_file_extensions:
+                      print_if_verbose(
+                          self._verbose,
+                          f"ignoring file {file_path} due to file extension",
+                      )
+                      continue
 
-                if self._use_parser:
-                    document = self._parse_supported_file(
-                        file_path=rel_path,
-                        file_content=file_content,
-                        tree_sha=None,
-                        tree_path=rel_path,
-                    )
-                    if document is not None:
-                        documents.append(document)
-                    else:
-                        continue
+              with open(file_path, "rb") as f:
+                  file_content = f.read()
 
-                try:
-                    decoded_text = file_content.decode("utf-8")
-                except UnicodeDecodeError:
-                    print_if_verbose(
-                        self._verbose, f"could not decode {file_path} as utf-8"
-                    )
-                    continue
+              if self._use_parser:
+                  document = self._parse_supported_file(
+                      file_path=rel_path,
+                      file_content=file_content,
+                      tree_sha=None,
+                      tree_path=rel_path,
+                  )
+                  if document is not None:
+                      documents.append(document)
+                  else:
+                      continue
 
-                print_if_verbose(
-                    self._verbose,
-                    f"got {len(decoded_text)} characters"
-                    + f"- adding to documents - {file_path}",
-                )
-                document = Document(
-                    text=decoded_text,
-                    doc_id=None,
-                    extra_info={
-                        "file_path": rel_path,
-                        "file_name": os.path.basename(file_path),
-                    },
-                )
-                documents.append(document)
+              try:
+                  decoded_text = file_content.decode("utf-8")
+              except UnicodeDecodeError:
+                  print_if_verbose(
+                      self._verbose, f"could not decode {file_path} as utf-8"
+                  )
+                  continue
 
-        return documents
+              print_if_verbose(
+                  self._verbose,
+                  f"got {len(decoded_text)} characters"
+                  + f"- adding to documents - {file_path}",
+              )
+              document = Document(
+                  text=decoded_text,
+                  doc_id=None,
+                  extra_info={
+                      "file_path": rel_path,
+                      "file_name": os.path.basename(file_path),
+                  },
+              )
+              documents.append(document)
+
+      return documents
 
     def _parse_supported_file(
         self, file_path: str, file_content: bytes, tree_sha: str, tree_path: str
